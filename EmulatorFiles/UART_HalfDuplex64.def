@@ -1,0 +1,8 @@
+LIBRARY UART_HalfDuplex64.dll
+
+EXPORTS
+close_port
+open_port
+read_frame
+read_unframed
+send_to_camera
