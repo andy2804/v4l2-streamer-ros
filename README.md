@@ -8,6 +8,8 @@ Getting started
 -----------------------------
 1. Compile the code using an IDE like CLion
 2. Connect the FLIR Boson 640 camera.
-⋅⋅⋅Make sure that your system has read access to the device, which should be listed as `/dev/ttyACM0`
-⋅⋅⋅If not you can give access to the device by invoking `sudo chmod a+rwx /dev/ttyACM0` command
+
+   Make sure that your system has read access to the device, which should be listed as `/dev/ttyACM0`
+   
+   If not you can give access to the device by invoking `sudo chmod a+rwx /dev/ttyACM0` command
 3. Run the code
