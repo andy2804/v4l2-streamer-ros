@@ -13,3 +13,8 @@ Getting started
    
    If not you can give access to the device by invoking `sudo chmod a+rwx /dev/ttyACM0` command
 3. Run the code
+
+-----------------------------
+Boson SDK Documentation
+-----------------------------
+[Boson SDK Documentation](https://drive.google.com/open?id=1fuXUIu_wzB4zuVmTPbtUhoiKg0WnqEHm)
