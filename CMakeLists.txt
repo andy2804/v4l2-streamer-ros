@@ -6,6 +6,7 @@ link_directories(${MY_SOURCE_DIR}/lib)
 include_directories(src)
 include_directories(include)
 find_package(OpenCV REQUIRED)
+find_package(ROS REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -20,7 +21,7 @@ set(SOURCE_FILES
         ${INC_FOLDER}/Client_Packager.c
         ${INC_FOLDER}/Serializer_BuiltIn.c
         ${INC_FOLDER}/Serializer_Struct.c
-        ${INC_FOLDER}/UART_Connector.c)
+        ${INC_FOLDER}/UART_Connector.c src/boson_ros_node.cpp)
 
 add_executable(boson_camera ${SOURCE_FILES})
 

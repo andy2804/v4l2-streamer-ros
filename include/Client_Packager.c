@@ -7033,7 +7033,7 @@ FLR_RESULT CLIENT_pkgMemReadCapture(const uint8_t bufferNum, const uint32_t offs
 	// Allocate buffers with space for marshalled data
 	uint32_t sendBytes = 7;
 	const uint8_t sendData[sendBytes];
-	uint32_t receiveBytes = 256;
+	uint32_t receiveBytes = 65536;
 	uint8_t receiveData[receiveBytes];
 	uint8_t *outPtr = (uint8_t *)sendData;
 	
