@@ -37,6 +37,11 @@ using namespace std;
  * =====================================================================
  */
 
+
+// TODO functionality to set video format
+// TODO functionality to set streaming frequency
+
+
 BosonCamera::BosonCamera(string device_address) {
     // Initialize Camera
     device = device_address;

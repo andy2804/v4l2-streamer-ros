@@ -13,13 +13,16 @@ extern "C" {
 
 
 // run using video4linux2 library
-int main() {
-    BosonCamera camera = BosonCamera("/dev/video1");
+int main(int argc, char *argv[]) {
+    // TODO automatic detection of the boson device
+    BosonCamera camera = BosonCamera("/dev/video1");    // adapt this line to your video device
     camera.init();
     camera.allocateBuffer();
     camera.startStream();
     int framecount = 0;
     time_t t_start = clock();
+
+    // TODO remove debug printouts
     while (true) {
 //        time_t t_start = clock();
         cv::Mat img = camera.captureRawFrame();
@@ -38,6 +41,8 @@ int main() {
             fflush(stdout);
         }
 
+        // TODO save images using cv::imwrite
+
         // Press 'q' to exit
         if (cv::waitKey(1) == 'q') {
             break;
@@ -48,6 +53,7 @@ int main() {
     return 0;
 }
 
+// TODO maybe remove?
 // don't use this
 // using boson sdk serial connection implementation
 // not working, since memory can't be properly read out

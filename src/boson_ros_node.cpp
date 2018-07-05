@@ -10,6 +10,8 @@
 #include "boson_camera.h"
 
 int main(int argc, char *argv[]) {
+    // TODO rewrite node in clean code format
+
     ros::init(argc, argv, "boson_camera_node");
 
     ros::NodeHandle nh;
