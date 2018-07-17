@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 
         // Normalize for visualization
         cv::normalize(img, img, 65536, 0, cv::NORM_MINMAX);
-        cv::imshow("Raw Input", img);
+//        cv::imshow("Raw Input", img);
         framecount++;
 
         if (framecount % 30 == 0) {

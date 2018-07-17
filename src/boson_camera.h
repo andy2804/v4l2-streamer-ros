@@ -18,6 +18,10 @@ class BosonCamera {
     cv::Mat raw_input;
 
 public:
+    int width;
+    int height;
+    timeval last_ts;
+
     BosonCamera();
     BosonCamera(std::string device_address);
     ~BosonCamera();

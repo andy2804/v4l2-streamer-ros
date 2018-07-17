@@ -21,7 +21,9 @@ int main(int argc, char *argv[]) {
     ros::NodeHandle nh;
     ros::NodeHandle nh_private("~");
 
-    BosonCamera camera = BosonCamera("/dev/video0");
+    printf("Video device set to: %s\n", argv[1]);
+
+    BosonCamera camera = BosonCamera(argv[1]);
     camera.init();
     camera.allocateBuffer();
     camera.startStream();
@@ -39,11 +41,15 @@ int main(int argc, char *argv[]) {
 
         // Normalize for visualization
         cv::normalize(img, img, 65536, 0, cv::NORM_MINMAX);
-        cv::imshow("Raw Input", img);
+//        cv::imshow("Raw Input", img);
         framecount++;
 
         // Convert to image_msg & publish msg
         sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img).toImageMsg();
+        msg->width = camera.width;
+        msg->height = camera.height;
+        msg->header.stamp.sec = camera.last_ts.tv_sec;
+        msg->header.stamp.nsec = camera.last_ts.tv_usec * 1e3;
         boson_raw_pub.publish(msg);
 
         ros::spinOnce();
