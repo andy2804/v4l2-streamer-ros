@@ -8,6 +8,10 @@
 #include <stdint.h>
 #include <opencv2/opencv.hpp>
 #include "boson_camera.h"
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
 
 int main(int argc, char *argv[]) {
     // TODO rewrite node in clean code format
@@ -17,13 +21,14 @@ int main(int argc, char *argv[]) {
     ros::NodeHandle nh;
     ros::NodeHandle nh_private("~");
 
-    BosonCamera camera = BosonCamera("/dev/video1");
+    BosonCamera camera = BosonCamera("/dev/video0");
     camera.init();
     camera.allocateBuffer();
     camera.startStream();
 
     // Setup publisher
-    ros::Publisher boson_raw_pub = nh.advertise("/boson/image_raw", 1);
+    image_transport::ImageTransport it(nh);
+    image_transport::Publisher boson_raw_pub = it.advertise("/boson/image_raw", 1);
 
     // Set publishing frequency to 10 Hz
     ros::Rate loop_rate(10);
@@ -37,16 +42,12 @@ int main(int argc, char *argv[]) {
         cv::imshow("Raw Input", img);
         framecount++;
 
-        /**
-         * TODO convert captured image into ros image_Raw msg
-         */
-
+        // Convert to image_msg & publish msg
+        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img).toImageMsg();
         boson_raw_pub.publish(msg);
 
         ros::spinOnce();
-
         loop_rate.sleep();
-        ++count;
     }
 
     ros::spinOnce();
@@ -57,3 +58,4 @@ int main(int argc, char *argv[]) {
     camera.closeConnection();
     return 0;
 }
+

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+    <name>boson_camera</name>
+
+    <version>0.0.1</version>
+    <license>GNU GPL</license>
+    <description>ROS Wrapper for the FLIR Boson 640 Camera.</description>
+
+    <author>Andreas Aumiller</author>
+    <maintainer email="andya@ethz.ch">Andreas Aumiller</maintainer>
+
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <buildtool_depend>catkin_simple</buildtool_depend>
+
+    <build_depend>OpenCV</build_depend>
+    <build_depend>roscpp</build_depend>
+    <build_depend>sensor_msgs</build_depend>
+    <build_depend>cv_bridge</build_depend>
+    <build_depend>image_transport</build_depend>
+
+</package>

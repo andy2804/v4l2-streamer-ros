@@ -1,30 +1,27 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 2.8.3)
 
 project(boson_camera)
 
-link_directories(${MY_SOURCE_DIR}/lib)
-include_directories(src)
-include_directories(include)
-find_package(OpenCV REQUIRED)
-find_package(ROS REQUIRED)
+find_package(catkin_simple REQUIRED)
 
-set(CMAKE_CXX_STANDARD 11)
+catkin_simple(ALL_DEPS_REQUIRED)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
+
+find_package(OpenCV REQUIRED)
 
 set(SRC_FOLDER src)
-set(INC_FOLDER include)
 
-set(SOURCE_FILES
-        ${SRC_FOLDER}/main.cpp
+cs_add_executable(
+        ${PROJECT_NAME}
+        ${SRC_FOLDER}/boson_ros_node.cpp
         ${SRC_FOLDER}/boson_camera.cpp
-        ${INC_FOLDER}/Client_API.c
-        ${INC_FOLDER}/Client_Dispatcher.c
-        ${INC_FOLDER}/Client_Packager.c
-        ${INC_FOLDER}/Serializer_BuiltIn.c
-        ${INC_FOLDER}/Serializer_Struct.c
-        ${INC_FOLDER}/UART_Connector.c src/boson_ros_node.cpp)
+)
+target_link_libraries(${PROJECT_NAME}
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+        )
 
-add_executable(boson_camera ${SOURCE_FILES})
+cs_install()
+cs_export()
 
-target_include_directories(boson_camera PUBLIC /EmulatorFiles)
-target_link_libraries(boson_camera UART_HalfDuplex64)
-target_link_libraries(boson_camera ${OpenCV_LIBS})
