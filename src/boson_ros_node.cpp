@@ -34,14 +34,18 @@ timespec get_reset_time() {
 
 int main(int argc, char *argv[]) {
     // TODO rewrite node in clean code format
+    // Default frame rate of 10 Hz
+    float frame_rate = 10.0;
 
+    // Initialize node
     ros::init(argc, argv, "boson_camera_node");
 
-    ros::NodeHandle nh;
+    ros::NodeHandle nh("boson");
     ros::NodeHandle nh_private("~");
 
     printf("Video device set to: %s\n", argv[1]);
 
+    // Initialize camera
     BosonCamera camera = BosonCamera(argv[1]);
     camera.init();
     camera.allocateBuffer();
@@ -53,24 +57,39 @@ int main(int argc, char *argv[]) {
     // Setup publisher
     image_transport::ImageTransport it(nh);
     image_transport::Publisher boson_raw_pub = it.advertise("/boson/image_raw", 1);
+    image_transport::Publisher boson_normalized_pub = it.advertise("/boson/image_normalized", 1);
 
-    // Set publishing frequency to 10 Hz
-    ros::Rate loop_rate(10);
+    // Set publishing frequency
+    if (nh.hasParam("frame_rate")) {
+        nh.getParam("frame_rate", frame_rate);
+    }
+    printf("Streaming with frequency of %.1f Hz\n", frame_rate);
     int framecount = 0;
+
+    ros::Rate loop_rate(frame_rate);
     while (ros::ok()) {
         cv::Mat img = camera.captureRawFrame();
+        cv::Mat img_norm;
+        img.copyTo(img_norm);
 
         // Normalize for visualization
-        cv::normalize(img, img, 65536, 0, cv::NORM_MINMAX);
+        cv::normalize(img, img_norm, 65536, 0, cv::NORM_MINMAX);
         framecount++;
 
         // Convert to image_msg & publish msg
-        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img).toImageMsg();
-        msg->width = camera.width;
-        msg->height = camera.height;
-        msg->header.stamp.sec = camera.last_ts.tv_sec + epoch_time.tv_sec;
-        msg->header.stamp.nsec = camera.last_ts.tv_usec * 1e3 + epoch_time.tv_nsec;
-        boson_raw_pub.publish(msg);
+        sensor_msgs::ImagePtr msg[2];
+        msg[0] = cv_bridge::CvImage(std_msgs::Header(), "mono16", img).toImageMsg();
+        msg[1] = cv_bridge::CvImage(std_msgs::Header(), "mono16", img_norm).toImageMsg();
+
+        for (int i = 0; i < 2; i++) {
+            msg[i]->width = camera.width;
+            msg[i]->height = camera.height;
+            msg[i]->header.stamp.sec = camera.last_ts.tv_sec + epoch_time.tv_sec;
+            msg[i]->header.stamp.nsec = camera.last_ts.tv_usec * 1e3 + epoch_time.tv_nsec;
+        }
+
+        boson_raw_pub.publish(msg[0]);
+        boson_normalized_pub.publish(msg[1]);
 
         ros::spinOnce();
         loop_rate.sleep();
