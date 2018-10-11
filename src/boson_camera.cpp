@@ -45,6 +45,8 @@ using namespace std;
 BosonCamera::BosonCamera(string device_address) {
     // Initialize Camera
     device = device_address;
+    width = 640;
+    height = 512;
     printf("Device set to: %s\n", device.c_str());
 }
 
@@ -142,6 +144,8 @@ cv::Mat BosonCamera::captureRawFrame() {
         perror("Buffer outgoing queue");
         exit(1);
     }
+
+    last_ts = buffer.timestamp;
 
     return raw_input;
 }
