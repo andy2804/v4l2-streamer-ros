@@ -9,7 +9,7 @@ extern "C" {
 #include "UART_Connector.h"
 }
 
-#include "boson_camera.h"
+#include "../include/boson_camera.h"
 
 
 // run using video4linux2 library
