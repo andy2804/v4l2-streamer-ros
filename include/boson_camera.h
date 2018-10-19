@@ -2,8 +2,8 @@
 // Created by andya on 02.07.18.
 //
 
-#ifndef BOSON_CAMERA_BOSON_CAMERA_H
-#define BOSON_CAMERA_BOSON_CAMERA_H
+#ifndef BOSON_CAMERA_H
+#define BOSON_CAMERA_H
 
 #include "../../../../../../../usr/include/c++/7/string"
 #include "../../../../../../../usr/include/linux/videodev2.h"
@@ -33,4 +33,4 @@ public:
     cv::Mat captureRawFrame();
 };
 
-#endif //BOSON_CAMERA_BOSON_CAMERA_H
+#endif

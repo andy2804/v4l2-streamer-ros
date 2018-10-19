@@ -15,12 +15,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-//extern "C" {
-//#include "Client_API.h"
-//#include "EnumTypes.h"
-//#include "UART_Connector.h"
-//}
-
 #include "boson_camera.h"
 
 
