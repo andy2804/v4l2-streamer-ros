@@ -5,9 +5,9 @@
 #ifndef BOSON_CAMERA_H
 #define BOSON_CAMERA_H
 
-#include "../../../../../../../usr/include/c++/7/string"
-#include "../../../../../../../usr/include/linux/videodev2.h"
-#include "../../../../../ros_catkin_ws/catkin_ws/install_isolated/include/opencv-3.3.1-dev/opencv2/opencv.hpp"
+#include <string>
+#include <linux/videodev2.h>
+#include <opencv2/opencv.hpp>
 
 class BosonCamera {
     int fd;
