@@ -15,7 +15,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <time.h>
 
-timespec get_reset_time() {
+ros::Duration get_reset_time() {
     /* get monotonic clock time */
     struct timespec monotime;
     clock_gettime(CLOCK_MONOTONIC, &monotime);
@@ -25,12 +25,19 @@ timespec get_reset_time() {
 //    clock_gettime(CLOCK_REALTIME, &realtime);
 
     ros::Time now = ros::Time::now();
+	ros::Duration epoch_duration(0, 0);
 
-    struct timespec epoch_time;
-    epoch_time.tv_sec = now.sec - monotime.tv_sec;
-    epoch_time.tv_nsec = now.nsec - monotime.tv_nsec;
-
-    return epoch_time;
+//    struct timespec epoch_duration;
+    epoch_duration.sec = now.sec - monotime.tv_sec;
+	long nsec = now.nsec - monotime.tv_nsec;
+	if (nsec < 0) {
+		epoch_duration.sec--;
+		epoch_duration.nsec = 1e9 + nsec;
+	} else {
+		epoch_duration.nsec = nsec;
+	}
+	std::cout << "Epoch Time: " << epoch_duration.sec << "." << epoch_duration.nsec << std::endl;
+    return epoch_duration;
 }
 
 int main(int argc, char *argv[]) {
@@ -60,7 +67,7 @@ int main(int argc, char *argv[]) {
     camera.startStream();
 
     // Get time difference between REALTIME and MONOTIME
-    struct timespec epoch_time = get_reset_time();
+    ros::Duration epoch_duration = get_reset_time();
 
     // Setup publisher
     ros::Publisher camera_info_pub_;
@@ -94,10 +101,14 @@ int main(int argc, char *argv[]) {
         msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img).toImageMsg();
 //        msg[1] = cv_bridge::CvImage(std_msgs::Header(), "mono8", img_norm).toImageMsg();
 
+		// Build timestamp
+		ros::Time last_ts(0, 0);
+		last_ts.sec = camera.last_ts.tv_sec;
+		last_ts.nsec = camera.last_ts.tv_usec * 1e3;
+
         msg->width = camera.width;
         msg->height = camera.height;
-        msg->header.stamp.sec = camera.last_ts.tv_sec + epoch_time.tv_sec;
-        msg->header.stamp.nsec = camera.last_ts.tv_usec * 1e3 + epoch_time.tv_nsec;
+        msg->header.stamp = last_ts + epoch_duration;
 
         boson_raw_pub.publish(msg);
 //        boson_normalized_pub.publish(msg[1]);
@@ -106,8 +117,7 @@ int main(int argc, char *argv[]) {
         if (cinfo_->isCalibrated()) {
             sensor_msgs::CameraInfoPtr cinfo_msg(
                     new sensor_msgs::CameraInfo(cinfo_->getCameraInfo()));
-            cinfo_msg->header.stamp.sec = camera.last_ts.tv_sec + epoch_time.tv_sec;
-            cinfo_msg->header.stamp.nsec = camera.last_ts.tv_usec * 1e3 + epoch_time.tv_nsec;
+            cinfo_msg->header.stamp = msg->header.stamp;
             camera_info_pub_.publish(cinfo_msg);
         } else {
             if (framecount % 100 == 0)
