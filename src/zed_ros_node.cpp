@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <opencv2/opencv.hpp>
-#include "boson_camera.h"
+#include "zed_camera.h"
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <camera_info_manager/camera_info_manager.h>
@@ -44,25 +44,40 @@ int main(int argc, char *argv[]) {
     // TODO rewrite node in clean code format
     // Default frame rate of 10 Hz
     float frame_rate = 10.0;
-    std::string camera_name = "boson";
+    std::string camera_name = "zed";
 
     // Initialize node
-    ros::init(argc, argv, "boson_camera_node");
-
-    ros::NodeHandle nh("boson");
+    ros::init(argc, argv, "zed_camera_node");
+    ros::NodeHandle nh("zed");
+    ros::NodeHandle nh_l("zed/left");
+    ros::NodeHandle nh_r("zed/right");
     ros::NodeHandle nh_private("~");
 
     // ROS param handling
-    std::string camera_info_url_;
-    nh_private.param("camera_info_url", camera_info_url_, std::string(""));
+    std::string camera_info_left, camera_info_right, encoding;
+    int width, height;
+    nh_private.param("camera_info_left", camera_info_left, std::string(""));
+    nh_private.param("camera_info_right", camera_info_right, std::string(""));
+    nh_private.param("image_encoding", encoding, std::string("rgb8"));
+    nh_private.param("width", width, 2560);
+    nh_private.param("height", height, 720);
+
+    // Readout framerate
+    // Set publishing frequency
+    if (nh.hasParam("frame_rate")) {
+        nh.getParam("frame_rate", frame_rate);
+    }
 
     // Initialize Camera Info Handler
-    std::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_;
-    cinfo_.reset(new camera_info_manager::CameraInfoManager(nh, camera_name, camera_info_url_));
+    std::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_left;
+    std::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_right;
+    cinfo_left.reset(new camera_info_manager::CameraInfoManager(nh_l, camera_name + "/left", camera_info_left));
+    cinfo_right.reset(new camera_info_manager::CameraInfoManager(nh_r, camera_name + "/right", camera_info_right));
 
     // Initialize camera
-    BosonCamera camera = BosonCamera(argv[1]);
+    ZedCamera camera = ZedCamera(argv[1], width, height);
     camera.init();
+    camera.setFramerate(frame_rate * 2);
     camera.allocateBuffer();
     camera.startStream();
 
@@ -70,58 +85,67 @@ int main(int argc, char *argv[]) {
     ros::Duration epoch_duration = get_reset_time();
 
     // Setup publisher
-    ros::Publisher camera_info_pub_;
-    camera_info_pub_ = nh.advertise<sensor_msgs::CameraInfo>("/boson/camera_info", 1);
+    ros::Publisher camera_info_pub_left;
+    ros::Publisher camera_info_pub_right;
+    camera_info_pub_left = nh_l.advertise<sensor_msgs::CameraInfo>("/zed/left/camera_info", 1);
+    camera_info_pub_right = nh_r.advertise<sensor_msgs::CameraInfo>("/zed/right/camera_info", 1);
 
     image_transport::ImageTransport it(nh);
-    image_transport::Publisher boson_raw_pub = it.advertise("/boson/image_raw", 1);
-//    image_transport::Publisher boson_normalized_pub = it.advertise("/boson/image_normalized", 1);
+    image_transport::Publisher zed_raw_pub_left = it.advertise("/zed/left/image_raw", 1);
+    image_transport::Publisher zed_raw_pub_right = it.advertise("/zed/right/image_raw", 1);
 
-    // Set publishing frequency
-    if (nh.hasParam("frame_rate")) {
-        nh.getParam("frame_rate", frame_rate);
-    }
     printf("Streaming with frequency of %.1f Hz\n", frame_rate);
     int framecount = 0;
 
     ros::Rate loop_rate(frame_rate);
 
     while (ros::ok()) {
+        // Capture frame and convert to rgb
         cv::Mat img = camera.captureRawFrame();
-//        cv::Mat img_norm;
-//        img.copyTo(img_norm);
-
-        // Normalize for visualization
-//        cv::normalize(img, img_norm, 65536, 0, cv::NORM_MINMAX);
-//        img_norm.convertTo(img_norm, CV_8UC1, 0.00390625, 0);
+        cv::cvtColor(img, img, cv::COLOR_YUV2RGB_YUYV);
         framecount++;
 
+        // Split to left & right image
+        cv::Mat left = img(cv::Rect(0, 0, img.cols/2, img.rows));
+        cv::Mat right = img(cv::Rect(img.cols/2, 0, img.cols/2, img.rows));
+
         // Convert to image_msg & publish msg
-        sensor_msgs::ImagePtr msg;
-        msg = cv_bridge::CvImage(std_msgs::Header(), "mono16", img).toImageMsg();
-//        msg[1] = cv_bridge::CvImage(std_msgs::Header(), "mono8", img_norm).toImageMsg();
+        sensor_msgs::ImagePtr msg[2];
+        msg[0] = cv_bridge::CvImage(std_msgs::Header(), encoding, left).toImageMsg();
+        msg[1] = cv_bridge::CvImage(std_msgs::Header(), encoding, right).toImageMsg();
 
 		// Build timestamp
 		ros::Time last_ts(0, 0);
 		last_ts.sec = camera.last_ts.tv_sec;
 		last_ts.nsec = camera.last_ts.tv_usec * 1e3;
 
-        msg->width = camera.width;
-        msg->height = camera.height;
-        msg->header.stamp = last_ts + epoch_duration;
+		for (int i = 0; i < 2; i++) {
+            msg[i]->width = camera.width/2;
+            msg[i]->height = camera.height;
+            msg[i]->header.stamp = last_ts + epoch_duration;
+		}
 
-        boson_raw_pub.publish(msg);
-//        boson_normalized_pub.publish(msg[1]);
+        zed_raw_pub_left.publish(msg[0]);
+        zed_raw_pub_right.publish(msg[1]);
 
         // Publish Camera Info
-        if (cinfo_->isCalibrated()) {
+        if (cinfo_left->isCalibrated()) {
             sensor_msgs::CameraInfoPtr cinfo_msg(
-                    new sensor_msgs::CameraInfo(cinfo_->getCameraInfo()));
-            cinfo_msg->header.stamp = msg->header.stamp;
-            camera_info_pub_.publish(cinfo_msg);
+                    new sensor_msgs::CameraInfo(cinfo_left->getCameraInfo()));
+            cinfo_msg->header.stamp = msg[0]->header.stamp;
+            camera_info_pub_left.publish(cinfo_msg);
         } else {
             if (framecount % 100 == 0)
-                ROS_INFO_ONCE("Boson is not calibrated!");
+                ROS_INFO_ONCE("ZED left camera is not calibrated!");
+        }
+        if (cinfo_right->isCalibrated()) {
+            sensor_msgs::CameraInfoPtr cinfo_msg(
+                    new sensor_msgs::CameraInfo(cinfo_right->getCameraInfo()));
+            cinfo_msg->header.stamp = msg[1]->header.stamp;
+            camera_info_pub_right.publish(cinfo_msg);
+        } else {
+            if (framecount % 100 == 0)
+                ROS_INFO_ONCE("ZED right camera is not calibrated!");
         }
 
         ros::spinOnce();
@@ -130,9 +154,9 @@ int main(int argc, char *argv[]) {
 
     ros::spinOnce();
 
-    boson_raw_pub.shutdown();
+    zed_raw_pub_left.shutdown();
 //    boson_normalized_pub.shutdown();
-    camera_info_pub_.shutdown();
+    camera_info_pub_left.shutdown();
 
     camera.stopStream();
     camera.closeConnection();

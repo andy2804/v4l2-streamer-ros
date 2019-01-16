@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
-    <name>boson_camera</name>
+    <name>zed_camera</name>
 
     <version>0.0.1</version>
     <license>GNU GPL</license>
-    <description>ROS Wrapper for the FLIR Boson 640 Camera.</description>
+    <description>ROS Wrapper for the Stereolabs ZED Camera using CPU only.</description>
 
     <author>Andreas Aumiller</author>
     <maintainer email="andya@ethz.ch">Andreas Aumiller</maintainer>
