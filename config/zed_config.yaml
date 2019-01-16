@@ -1,0 +1,20 @@
+# The tf frame under which the images were published
+camera_frame: zed_camera
+
+# ROS Namespace
+device_user_id: "zed"
+
+# Where to find the camera calibration. Leave empty to use default directory:
+# /zed_camera/config/calibration/ (left.yaml & right.yaml)
+camera_info_url: ""
+
+# Image resolution (need to comply with camera resolution profiles)
+# Note changing the resolution results in obsolete camera calibration
+width: 2560
+height: 720
+
+# Encoding for image transport
+image_encoding: "rgb8"
+
+# Desired Framerate (need to comply with camera framerate profiles)
+frame_rate: 30
