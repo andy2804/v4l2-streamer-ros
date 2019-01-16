@@ -2,14 +2,14 @@
 // Created by andya on 02.07.18.
 //
 
-#ifndef BOSON_CAMERA_BOSON_CAMERA_H
-#define BOSON_CAMERA_BOSON_CAMERA_H
+#ifndef ZED_CAMERA_H
+#define ZED_CAMERA_H
 
 #include <string>
 #include <linux/videodev2.h>
 #include <opencv2/opencv.hpp>
 
-class BosonCamera {
+class ZedCamera {
     int fd;
     std::string device;
     struct v4l2_capability cap;
@@ -22,10 +22,11 @@ public:
     int height;
     timeval last_ts;
 
-    BosonCamera();
-    BosonCamera(std::string device_address);
-    ~BosonCamera();
+    ZedCamera();
+    ZedCamera(std::string device_address, int width, int height);
+    ~ZedCamera();
     void init();
+    void setFramerate(int fps);
     void allocateBuffer();
     void startStream();
     void stopStream();
@@ -33,4 +34,4 @@ public:
     cv::Mat captureRawFrame();
 };
 
-#endif //BOSON_CAMERA_BOSON_CAMERA_H
+#endif
