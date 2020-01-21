@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package>
-    <name>zed_camera</name>
+    <name>v4l2_camera</name>
 
-    <version>0.0.1</version>
+    <version>1.0.1</version>
     <license>GNU GPL</license>
-    <description>ROS Wrapper for the Stereolabs ZED Camera using CPU only.</description>
+    <description>ROS Wrapper for standard UVC (V4L2) cameras which can be mounted through /dev/videoX.</description>
 
     <author>Andreas Aumiller</author>
-    <maintainer email="andya@ethz.ch">Andreas Aumiller</maintainer>
+    <maintainer email="andy.aumiller@gmail.com">Andreas Aumiller</maintainer>
 
 
     <buildtool_depend>catkin</buildtool_depend>

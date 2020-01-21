@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "zed_camera.h"
+#include "v4l2_camera.h"
 
 
 using namespace std;
@@ -32,11 +32,7 @@ using namespace std;
  */
 
 
-// TODO functionality to set video format
-// TODO functionality to set streaming frequency
-
-
-ZedCamera::ZedCamera(string device_address, int width_requested, int height_requested) {
+v4l2Camera::v4l2Camera(string device_address, int width_requested, int height_requested) {
     // Initialize Camera
     device = device_address;
     width = width_requested;
@@ -44,14 +40,14 @@ ZedCamera::ZedCamera(string device_address, int width_requested, int height_requ
     printf("Device set to: %s\n", device.c_str());
 }
 
-ZedCamera::ZedCamera() {}
+v4l2Camera::v4l2Camera() {}
 
-ZedCamera::~ZedCamera() {
+v4l2Camera::~v4l2Camera() {
     stopStream();
     closeConnection();
 }
 
-void ZedCamera::init() {
+void v4l2Camera::init() {
     // Open camera connection
     char *dev = &device[0u];
     if ((fd = open(dev, O_RDWR)) == -1) {
@@ -71,9 +67,9 @@ void ZedCamera::init() {
 
     // Set video format
     format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;    // 16-bit 4:2:2
-    format.fmt.pix.width = ZedCamera::width;
-    format.fmt.pix.height = ZedCamera::height;
+    format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+    format.fmt.pix.width = v4l2Camera::width;
+    format.fmt.pix.height = v4l2Camera::height;
 
     // Request desired format
     if (ioctl(fd, VIDIOC_S_FMT, &format) == -1) {
@@ -82,7 +78,7 @@ void ZedCamera::init() {
     }
 }
 
-void ZedCamera::setFramerate(int fps) {
+void v4l2Camera::setFramerate(int fps) {
     // Set framerate struct
     struct v4l2_streamparm parm;
     parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -96,7 +92,7 @@ void ZedCamera::setFramerate(int fps) {
     }
 }
 
-void ZedCamera::allocateBuffer() {
+void v4l2Camera::allocateBuffer() {
 
     // Request Buffer
     struct v4l2_requestbuffers bufrequest;
@@ -137,10 +133,10 @@ void ZedCamera::allocateBuffer() {
 
     // Declare openCV Buffer address
     cv::Mat raw_input(format.fmt.pix.height, format.fmt.pix.width, CV_8UC2, buffer_start);
-    ZedCamera::raw_input = raw_input;
+    v4l2Camera::raw_input = raw_input;
 }
 
-cv::Mat ZedCamera::captureRawFrame() {
+cv::Mat v4l2Camera::captureRawFrame() {
     // Put the buffer in the incoming queue.
     if (ioctl(fd, VIDIOC_QBUF, &buffer) < 0) {
         perror("Buffer incoming queue");
@@ -157,11 +153,11 @@ cv::Mat ZedCamera::captureRawFrame() {
     return raw_input;
 }
 
-void ZedCamera::closeConnection() {
+void v4l2Camera::closeConnection() {
     close(fd);
 }
 
-void ZedCamera::startStream() {
+void v4l2Camera::startStream() {
     // Activate streaming
     if (ioctl(fd, VIDIOC_STREAMON, &buffer.type) < 0) {
         perror("Streaming");
@@ -169,7 +165,7 @@ void ZedCamera::startStream() {
     }
 }
 
-void ZedCamera::stopStream() {
+void v4l2Camera::stopStream() {
     // Deactivate streaming
     if (ioctl(fd, VIDIOC_STREAMOFF, &buffer.type) < 0) {
         perror("Streaming");
